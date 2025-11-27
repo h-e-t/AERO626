@@ -111,7 +111,7 @@ classdef MEKF_CLASS < handle
 
             H = [skewSym(-quat2rotm(obj.estimate(1:4)')*[0;0;9.81]) , Z33, Z33, Z33, I33];
 
-            delf = quat2rotm(obj.estimate(1:4)')'*[0;0;-9.81] - (acc_meas - obj.estimate(14:16))
+            delf = quat2rotm(obj.estimate(1:4)')'*[0;0;-9.81] - (acc_meas - obj.estimate(14:16));
             % delf = (acc_meas - obj.estimate(14:16)) - quat2rotm(obj.estimate(1:4)')'*[0;0;-9.81];
             
             Kgain = obj.estimate_covariance*H'/(H * obj.estimate_covariance * H' + obj.accel_cov);
