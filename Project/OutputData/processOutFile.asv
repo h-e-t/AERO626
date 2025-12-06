@@ -1,4 +1,4 @@
-function processOutFile()
+% function processOutFile()
     out = evalin("base", "out");
 
     eulerAngles               = out.EuAngles.Data;
@@ -8,9 +8,10 @@ function processOutFile()
     inertialPosition          = out.Xe.Data; 
     
 
-    MeasuredBodyAccelerations     = squeeze(out.Ab_est.Data); 
+    MeasuredBodyAccelerations     = out.Ab_est.Data; 
     MeasuredBodyAngularRates      = out.Wb_est.Data;
     MeasuredBodyMagMeasurements   = squeeze(out.bodyFrameMag.Data)'; 
+
     
     BodyFrameGravity          = squeeze(out.bodyFrameGravity.Data)';
     
@@ -27,7 +28,7 @@ function processOutFile()
     % [11:13] gyro  bias
     % [14:16] accel bias
 
-    TrueStateHistory          = [quatAttitude'; inertialVelocity'; inertialPosition']; 
+    TrueStateHistory          = [quatAttitude; inertialVelocity; inertialPosition]'; 
     
     time              = out.tout;
     
@@ -41,4 +42,4 @@ function processOutFile()
                     'eulerAngles', 'inertialVelocity', 'inertialPosition', ...
                     "quatAttitude", "time", "BodyFrameGravity", "BodyFrameGravity", ...
                     "MeasuredBodyMagMeasurements", "TrueStateHistory");
-end
+% end

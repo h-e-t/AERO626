@@ -251,6 +251,7 @@ classdef ExtendedGaussianMixtureFilter < handle
             end
         end
 
+        
         function [cond_mean, cond_cov] = getCondProps(obj)
             % For a given state of the filter, this function calculates and
             % outputs the conditional mean and covariance of the gaussian

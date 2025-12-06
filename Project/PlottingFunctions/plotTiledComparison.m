@@ -1,0 +1,48 @@
+function plotTiledComparison(n, xSeriesData, data1, data2, yLabels, xLabelStr)
+% plotTiledComparison creates an n-by-1 tiled layout where each tile 
+% shows the i-th row of data1 and data2 plotted together.
+%
+% INPUTS:
+%   n          - number of rows (tiles)
+%   data1      - n x d array, data for each tile
+%   data2      - n x d array, data for each tile
+%   yLabels    - n x 1 cell array of y-axis labels for each tile
+%   xLabelStr  - string, the single x-axis label at the bottom
+%
+% Example:
+%    plotTiledComparison(3, rand(3,50), rand(3,50), ...
+%                        {'Accel','Vel','Pos'}, 'Time (s)');
+
+    % Create tiled layout
+    t = tiledlayout(n, 1);
+    % t.TileSpacing = 'compact';
+    % t.Padding = 'compact';
+
+    % Loop through tiles
+
+    
+    for i = 1:n
+        nexttile;
+
+        plot(xSeriesData, data1(i,:), 'LineWidth', 1.3); 
+
+        % if ~isempty(data2) || ~isnan(data2)
+        %     hold on;
+        %     plot(xSeriesData, data2(i,:), 'LineWidth', 1.3);
+        % end
+
+        ylabel(yLabels{i}, 'Interpreter', 'latex');
+        grid on;
+
+        if i == n
+            xlabel(xLabelStr, 'Interpreter', 'latex');
+        else
+            xticklabels([]);  % remove x labels for internal plots
+        end
+    end
+
+    % Add legend only once to entire figure (optional)
+    lgd = legend({'data1','data2'}, 'Interpreter', 'latex');
+    lgd.Layout.Tile = 'north'; % places the legend at top of the tiled layout
+
+end
