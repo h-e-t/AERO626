@@ -191,7 +191,6 @@ classdef MEKF_CLASS < handle
             obj.estimate_covariance = (eye(15) - Kgain*H)*obj.estimate_covariance; 
 
             obj.estimate(5:end) = obj.estimate(5:end) + aPosterioriErrorState(4:end); 
-
         end
         
         function del_v = updateWithGPS(obj, vel_measurement, pos_measurement)
@@ -215,9 +214,9 @@ classdef MEKF_CLASS < handle
             obj.estimate_covariance = (eye(15) - Kgain*H)*obj.estimate_covariance; 
 
             % Make updates only to position and velocity
-            obj.estimate(5:10) = obj.estimate(5:10) + aPosterioriErrorState(4:9); 
+            obj.estimate(5:end) = obj.estimate(5:end) + aPosterioriErrorState(4:end); 
             
-            obj.estimate(14:16) = obj.estimate(14:16) + aPosterioriErrorState(13:15);
+            % obj.estimate(14:16) = obj.estimate(14:16) + aPosterioriErrorState(13:15);
         end
 
         function [state, covariance] = getFilterState(obj)

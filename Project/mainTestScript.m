@@ -50,7 +50,7 @@ firstState = rad2deg(quat2eul(state(1:4)'))
 numSamplesTested = 4634; % this completes the ascent for 85 deg 
 
 for i=1:numSamplesTested
-    BodyAccelBias = [.2 .2 .2]';
+    BodyAccelBias = [.2 .2 -.2]';
     % angular rates are measured as x y z rates in the body frame
     [delta, cov] = filter.propagate(MeasuredBodyAngularRates(i,:)', MeasuredBodyAccelerations(i,:)' + BodyAccelBias, dt);
     filter.estimate_covariance = cov; 
@@ -86,6 +86,7 @@ for i=1:numSamplesTested
         delz = [delz del];
 
     end
+    
     [state, covariance] = filter.getFilterState();
     
     stateHistory        = [stateHistory state]; 
@@ -96,28 +97,24 @@ end
 
 % 
 Plotter(time(1:numSamplesTested), stateHistory,covarianceHistory, TrueStateHistory(:,1:numSamplesTested), 1, 1, 1); 
-% %%
-% figure(Name = "Quaternion Estimate vs Truth")
-% plotTiledComparison(4, time(1:numSamplesTested), stateHistory(1:4,:), TrueStateHistory(1:4,1:numSamplesTested), {'scalar','q1','q2', 'q3'}, 'Time (s)'); 
-% %%
-% figure(Name = "Quaternion Estimate Covariance")
-% quatError = stateHistory(1:4,:) - TrueStateHistory(1:4,1:numSamplesTested); 
-% plotTiledCovariance(4,time(1:numSamplesTested), quatError, 3*sqrt(covarianceHistory(1:4,:)),{"$q_1$ Error", "$q_2$ Error", "$q_3$ Error", "$q_4$ Error"}, "Time (s)")
-% 
-% % plotTiledComparison(3,time(1:numSamplesTested), 3*sqrt(covarianceHistory(1:3,:)), nan, {"e1", "e2", "e3"}, "Time (s)")
-% %%
-% figure(Name = "Velocity Estimate Covariance")
-% velError = stateHistory(5:7,:) - TrueStateHistory(5:7,1:numSamplesTested);
-% plotTiledCovariance(3,time(1:numSamplesTested), velError, 3*sqrt(covarianceHistory(4:6,:)),{"$v_x$ Error", "$v_y$ Error", "$v_z$ Error"}, "Time (s)")
-% 
-% %%
-% figure(Name = "Position Estimate Covariance")
-% posError = stateHistory(8:10,:) - TrueStateHistory(8:10,1:numSamplesTested);
-% plotTiledCovariance(3,time(1:numSamplesTested), posError, 3*sqrt(covarianceHistory(7:9,:)),{"$r_x$ Error", "$r_y$ Error", "$r_z$ Error"}, "Time (s)")
+%%
+figure(Name = "Quaternion Estimate Covariance")
+quatError = stateHistory(1:4,:) - TrueStateHistory(1:4,1:numSamplesTested); 
+plotTiledCovariance(4,time(1:numSamplesTested), quatError, 3*sqrt(covarianceHistory(1:4,:)),{"$q_1$ Error", "$q_2$ Error", "$q_3$ Error", "$q_4$ Error"}, "Time (s)")
 
-% figure(Name = "Gyro bias estimate")
-% estimateError = stateHistory(14:16, :); 
-% plotTiledCovariance(3,time(1:numSamplesTested), estimateError, 3*sqrt(covarianceHistory(10:12,:)),{"$b_{\omega x}$ Error", "$b_{\omega y}$ Error", "$b_{\omega z}$ Error"}, "Time (s)")
+%%
+figure(Name = "Velocity Estimate Covariance")
+velError = stateHistory(5:7,:) - TrueStateHistory(5:7,1:numSamplesTested);
+plotTiledCovariance(3,time(1:numSamplesTested), velError, 3*sqrt(covarianceHistory(4:6,:)),{"$v_x$ Error", "$v_y$ Error", "$v_z$ Error"}, "Time (s)")
+
+%%
+figure(Name = "Position Estimate Covariance")
+posError = stateHistory(8:10,:) - TrueStateHistory(8:10,1:numSamplesTested);
+plotTiledCovariance(3,time(1:numSamplesTested), posError, 3*sqrt(covarianceHistory(7:9,:)),{"$r_x$ Error", "$r_y$ Error", "$r_z$ Error"}, "Time (s)")
+
+figure(Name = "Gyro bias estimate")
+estimateError = stateHistory(14:16, :); 
+plotTiledCovariance(3,time(1:numSamplesTested), estimateError, 3*sqrt(covarianceHistory(10:12,:)),{"$b_{\omega x}$ Error", "$b_{\omega y}$ Error", "$b_{\omega z}$ Error"}, "Time (s)")
 
 figure(Name = "Accel bias estimate")
 estimateError = stateHistory(11:13, :); 
@@ -133,3 +130,19 @@ for i = 1:3
     hold on
     plot(RealBodyAccelerations(1:numSamplesTested, i)-BodyFrameGravity(1:numSamplesTested, i))
 end
+
+
+%%
+figure()
+
+figure()
+tiledlayout(4,1)
+for i = 1:4
+    nexttile
+
+    plot(stateHistory(i,:)-TrueStateHistory(i,1:numSamplesTested))
+    % hold on 
+    % plot(TrueStateHistory(i,1:numSamplesTested))
+
+end
+
