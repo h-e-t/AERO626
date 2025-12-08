@@ -11,6 +11,8 @@ function processOutFile()
     MeasuredBodyAccelerations     = squeeze(out.Ab_est.Data)'; 
     MeasuredBodyAngularRates      = squeeze(out.Wb_est.Data)';
     MeasuredBodyMagMeasurements   = squeeze(out.bodyFrameMag.Data)';     
+    MeasuredVelocity              = squeeze(out.ve_est.Data)';
+    MeasuredPosition              = squeeze(out.xe_est.Data)';
     
     RealBodyAccelerations     = squeeze(out.Ab_real.Data)';
     RealBodyAngularRates      = out.Wb_real.Data;
@@ -29,7 +31,7 @@ function processOutFile()
     time              = out.tout;
     
     saveName = datedFilename('Log', '.mat', ...
-        'C:\Users\emmat\Desktop\Year5\AERO626\Project\OutputData\',"MMdd_HHmmss");
+        'C:\Users\emmat\Desktop\ACADEMIC\YEAR5\AERO626\Project\OutputData\',"MMdd_HHmmss");
 
     disp("File saved at " + saveName);
     
@@ -37,5 +39,6 @@ function processOutFile()
                     'RealBodyAccelerations', 'RealBodyAngularRates', ...
                     'eulerAngles', 'inertialVelocity', 'inertialPosition', ...
                     "quatAttitude", "time", "MeasuredBodyMagMeasurements", ...
-                    "TrueStateHistory", "inertialAcceleration", "BodyFrameGravity");
+                    "TrueStateHistory", "inertialAcceleration", "BodyFrameGravity", ...
+                    "MeasuredVelocity", "MeasuredPosition");
 end

@@ -8,7 +8,7 @@ function [x_meas,v_meas] = RayleighSampling(position, velocity)
     theta = 2*pi*rand(); 
 
     dr = [r * cos(theta); r * sin(theta); 3*r_sigma*randn()] ;
-    dv = .1 * randn(); 
+    dv = [.1*randn(); .1*randn(); .5*randn()]; 
     
     x_meas = position + dr; 
     v_meas = velocity + dv; 
