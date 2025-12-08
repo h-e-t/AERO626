@@ -1,4 +1,5 @@
 function [x_meas,v_meas] = RayleighSampling(position, velocity)
+    
     % Sigma defined by 2.5 50% CEP by NEO6M gps
     r_sigma = 1.177; 
    

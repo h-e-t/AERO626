@@ -15,14 +15,13 @@ classdef MEKF_CLASS < handle
         barometer_variance
         barometer_bias
 
-        previousVel
-        previousAccel
-
-        propagations_since_last_update
-        
         mag_cov
 
         gpsVariance
+
+        consecutive_grav_updates
+
+        covarianceFloor
     end
 
     methods
@@ -41,7 +40,10 @@ classdef MEKF_CLASS < handle
         % [13:15] accel bias
         function obj = MEKF_CLASS(init_estimate, estimate_covariance, ...
                                   gyro_cov,      gyro_bias_cov,  ...
-                                  accel_cov,     accel_bias_cov, baro_cov)
+                                  accel_cov,     accel_bias_cov, ...
+                                  mag_cov, ...
+                                  gps_cov, ...
+                                  baro_cov)
 
             obj.estimate            = init_estimate;
             obj.estimate_covariance = estimate_covariance * eye(15); 
@@ -54,13 +56,15 @@ classdef MEKF_CLASS < handle
             obj.accel_bias          = zeros(3,1); 
             obj.accel_bias_cov      = accel_bias_cov; 
 
-            obj.mag_cov             = 1*eye(3,3); 
+            obj.mag_cov             = mag_cov; 
             
             obj.barometer_variance  = baro_cov; 
 
-            obj.propagations_since_last_update = 0;
+            obj.gpsVariance         = gps_cov; 
 
-            obj.gpsVariance         = diag([.1 .1 .1 1.17 1.17 1.17]); 
+            obj.consecutive_grav_updates  = 0;
+
+            obj.covarianceFloor = [0.0012 0.0012 0.0012 .05 .05 .05 .2 .2 1 .05 .05 .05 .05 .05 .05]';
         end
 
         function Qd = processCovariance(obj, dt)
@@ -80,32 +84,29 @@ classdef MEKF_CLASS < handle
                               Z33,              -(dt^2*sbf)/2,               -(dt^3*sbf)/6,           Z33,        dt*sbf];
         end
 
-        function [delta, cov] = propagate(obj, gyro_meas, acc_meas, dt)
+        function propagate(obj, gyro_meas, acc_meas, dt)
             gyro_meas   = gyro_meas - obj.gyro_bias;
             accel_meas  = acc_meas  - obj.accel_bias;
 
             assert(any(size(gyro_meas) ==[3,1]))
             assert(any(size(accel_meas)==[3,1]))
             
+
+
             % Propagate quaternion attiude using measurement
-            if norm(obj.estimate(1:4)') ~= 1
-                obj.estimate(1:4) = obj.estimate(1:4) / norm(obj.estimate(1:4)');
-            end
-
-
+            quatAttitude = quaternion(obj.estimate(1:4)') * quaternion(quatexp(.5*reshape([0;gyro_meas.*dt],1,4)));
+       
+            R = quat2rotm(obj.estimate(1:4)'); %
+            g = [0 0 9.81]'; 
+                        
             % update the velocity and position estimates using quaternion
-            % vkm          = (quat2rotm(quatAttitude)*accel_meas + [0 0 9.81]').*dt + obj.estimate(5:7); 
-            vkm          = (quat2rotm(obj.estimate(1:4)')*accel_meas + [0 0 9.81]').*dt + obj.estimate(5:7); 
+            vkm          = (R*accel_meas + g)*dt + obj.estimate(5:7); 
             rkm          = vkm*dt + obj.estimate(8:10); 
             
             
-            quatAttitude = quaternion(obj.estimate(1:4)') * quaternion(quatexp(.5*reshape([0;gyro_meas.*dt],1,4)));
-            
-            % Covariance Propagation 
             I3 = eye(3); 
             Z3 = zeros(3,3); 
             
-            %TODO: check about specific force vs acceleration in F
             F  = [-skewSym(gyro_meas)                          Z3 Z3 -I3 Z3                      ; 
                   -quat2rotm(quatAttitude)*skewSym(accel_meas) Z3 Z3  Z3 -quat2rotm(quatAttitude);
                   Z3                                           I3 Z3  Z3 Z3;
@@ -116,17 +117,32 @@ classdef MEKF_CLASS < handle
 
             % Calculate new covariance
             obj.estimate_covariance = STM * obj.estimate_covariance * STM' + obj.processCovariance(dt);
-            
-            
-            delta = obj.processCovariance(dt); 
-            cov = obj.estimate_covariance; 
 
             obj.estimate(1:4)   = quatAttitude.compact; 
             obj.estimate(5:7)   = vkm; 
-            obj.estimate(8:10)  = rkm;             
+            obj.estimate(8:10)  = rkm;    
+
+            if norm(obj.estimate(1:4)') ~= 1
+                obj.estimate(1:4) = obj.estimate(1:4) / norm(obj.estimate(1:4)');
+            end
         end
 
-        function delf = updateWithGravity(obj, acc_meas)
+        function updateWithGravity(obj, acc_meas)
+            % Basic Outlier Rejection 
+            N = 15; 
+            isValidReading = abs(9.81 - norm(acc_meas)) < .4; 
+            
+            if  isValidReading 
+                obj.consecutive_grav_updates = obj.consecutive_grav_updates + 1; 
+            else
+                obj.consecutive_grav_updates = 0;
+                return
+            end
+            
+            if obj.consecutive_grav_updates < N
+                return
+            end
+
             aPrioriErrorState = zeros(15,1); % Only in attitude
 
             Z33 = zeros(3,3); 
@@ -147,35 +163,29 @@ classdef MEKF_CLASS < handle
 
             obj.estimate(11:16) = obj.estimate(11:16) + aPosterioriErrorState(10:15);
         end
+       
+        function updateWithMagnetometer(obj, magMeas)
+               % NED_mag         = [27.5550; -2.4169; -16.0849];
 
-        function delm = updateWithMagnetometer(obj, magMeas)
-            aPrioriErrorState = zeros(15,1); % Only in attitude
+            NED_declination = -0.0875; 
 
-            Z33 = zeros(3,3); 
-            I33  = eye(3); 
+            Estimated_Mag   = quat2rotm(obj.estimate(1:4)')*magMeas;
 
-            NED_mag = [27.5550; -2.4169; -16.0849];
-            % NED_mag = [27.5550; 0; -16.0849];
+            EstimatedDeclination = atan2(Estimated_Mag(2), Estimated_Mag(1));
 
-            H = [skewSym(-quat2rotm(obj.estimate(1:4)')*NED_mag), Z33, Z33, Z33, Z33];
+            del_beta = [0 0 (NED_declination - EstimatedDeclination)]';
 
-            % delm = quat2rotm(obj.estimate(1:4)')'*-NED_mag - magMeas
-            delm = magMeas - quat2dcm(obj.estimate(1:4)')*NED_mag;
+            Kgain = obj.estimate_covariance(1:3,1:3)/(obj.mag_cov + obj.estimate_covariance(1:3,1:3));
 
-            Kgain = obj.estimate_covariance*H'/(H * obj.estimate_covariance * H' + obj.mag_cov);
+            obj.estimate(1:4) = quatmultiply(obj.estimate(1:4)', [1 (Kgain*del_beta)'./2]); 
 
-            aPosterioriErrorState = aPrioriErrorState + Kgain*delm;
+            obj.estimate_covariance(1:3, 1:3) = (eye(3) - Kgain)*obj.estimate_covariance(1:3, 1:3); 
 
-            % aPosterior error state covariance
-            obj.estimate_covariance = (eye(15) - Kgain*H)*obj.estimate_covariance; 
 
-            obj.estimate(1:4) = quatmultiply(obj.estimate(1:4)', [1 aPosterioriErrorState(1:3)'./2]); 
-
-            obj.estimate(11:16) = obj.estimate(11:16) + aPrioriErrorState(10:15); 
         end
 
-        function del_z =  updateWithBarometer(obj, baro_meas)
-            aPrioriErrorState = zeros(15,1); % Only in position
+        function updateWithBarometer(obj, baro_meas)
+            aPrioriErrorState = zeros(15,1); 
 
             Z13 = zeros(1,3); 
 
@@ -186,18 +196,19 @@ classdef MEKF_CLASS < handle
             Kgain = obj.estimate_covariance*H'/(H * obj.estimate_covariance * H' + obj.barometer_variance);
 
             aPosterioriErrorState = aPrioriErrorState + Kgain*del_z; 
-            % aPosterioriErrorState(9)
 
-            obj.estimate_covariance = (eye(15) - Kgain*H)*obj.estimate_covariance; 
+            obj.estimate_covariance = (eye(15) - Kgain*H)*obj.estimate_covariance;
 
             obj.estimate(5:end) = obj.estimate(5:end) + aPosterioriErrorState(4:end); 
+        
+            obj.checkFloor()
         end
         
-        function del_v = updateWithGPS(obj, vel_measurement, pos_measurement)
+        function updateWithGPS(obj, vel_measurement, pos_measurement)
             assert(~any(size(pos_measurement)  ~= [3,1]))
             assert(~any(size(vel_measurement) ~= [3,1]))
             
-            aPrioriErrorState = zeros(15,1); % Only in attitude
+            aPrioriErrorState = zeros(15,1);
 
             Z33 = zeros(3,3); 
             I3  = eye(3);
@@ -209,20 +220,67 @@ classdef MEKF_CLASS < handle
 
             Kgain = obj.estimate_covariance*H'/(H * obj.estimate_covariance * H' + obj.gpsVariance);
 
-            aPosterioriErrorState = aPrioriErrorState + Kgain*del_vx; 
-
-            obj.estimate_covariance = (eye(15) - Kgain*H)*obj.estimate_covariance; 
-
-            % Make updates only to position and velocity
-            obj.estimate(5:end) = obj.estimate(5:end) + aPosterioriErrorState(4:end); 
+            aPosterioriErrorState = aPrioriErrorState + Kgain*del_vx;
             
-            % obj.estimate(14:16) = obj.estimate(14:16) + aPosterioriErrorState(13:15);
+
+            I = eye(15);
+            S = H * obj.estimate_covariance * H' + obj.gpsVariance;
+            K = obj.estimate_covariance * H' / S;
+            
+            obj.estimate_covariance = (I - K*H)*obj.estimate_covariance*(I - K*H)' + K*obj.gpsVariance*K'; 
+            obj.estimate(5:10) = obj.estimate(5:10) + aPosterioriErrorState(4:9);
+            
+            
+            obj.checkFloor()
+        end
+
+        function checkFloor(obj)
+            d = diag(obj.estimate_covariance); 
+            d = max(d, obj.covarianceFloor); 
+            obj.estimate_covariance(1:16:end) = d; 
         end
 
         function [state, covariance] = getFilterState(obj)
             state       = obj.estimate; 
             covariance  = diag(obj.estimate_covariance); 
         end
+        
+        % EGMF Helper Functions 
 
+        function newObj = clone(obj)
+            % Create a new MEKF with identical internal state
+            newObj = MEKF_CLASS( ...
+                obj.estimate, ...
+                obj.estimate_covariance, ...
+                obj.gyro_cov, ...
+                obj.gyro_bias_cov, ...
+                obj.accel_cov, ...
+                obj.accel_bias_cov, ...
+                obj.mag_cov, ...
+                obj.gpsVariance, ...
+                obj.barometer_variance );
+    
+            % Copy all dynamic internal variables
+            newObj.gyro_bias  = obj.gyro_bias;
+            newObj.accel_bias = obj.accel_bias;
+            newObj.consecutive_grav_updates = obj.consecutive_grav_updates;
+            newObj.covarianceFloor = obj.covarianceFloor;
+        end
+    
+        % function propagate(obj, gyro_meas, acc_meas, dt)
+        function rotate(obj, rotation)
+            arguments
+                obj
+                rotation 
+            end
+            
+            assert(any(size(rotation) ~= [3 1]))
+            
+            quatAttitude = quaternion(obj.estimate(1:4)') * quaternion(quatexp(.5*[0 rotation]));
+            
+            obj.estimate(1:4)   = quatAttitude.compact; 
+        end
     end
 end
+
+

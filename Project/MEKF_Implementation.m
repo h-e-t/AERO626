@@ -1,8 +1,6 @@
 clear 
 clc
-% 
-% load("firstSave.mat")
-% 
+
 % syms I t tau dt sw sf sbw sbf real
 % 
 % assume(dt, 'real')
@@ -46,29 +44,19 @@ clc
 %                       Z33,              -(dt^2*sbf)/2,               -(dt^3*sbf)/6,           Z33,        dt*sbf];
 % end
 
-function magMeas = measurement(attitude, defaultMag)
-    arguments
-        attitude 
-        defaultMag = [27.5550, -2.4169, -16.0849]'
-    end
-
-    magMeas = quat2dcm(attitude)*defaultMag; 
-    
-end
-
-defaultMag = [27.5550, -2.4169, -16.0849]'
-
-yaw = 90
-rotation = eul2quat(deg2rad([yaw 0 0]), "ZYX");
-
-meas = measurement(rotation)
+% # Simulation 2 (Up to date)
+% # 220 data points written for 3 variables.
+% #
+% # Time (s),Altitude (m),Vertical velocity (m/s)
+% # Event IGNITION occurred at t=0 seconds
+% # Event LAUNCH occurred at t=0 seconds
 
 
+load("OutputData\Log_1208_145256.mat");
+data = csvread("RocketData\OpenRocketDat.csv");
 
-quiver(0,0,defaultMag(1),defaultMag(2), DisplayName="0 yaw")
-hold on
-quiver(0,0,meas(1),meas(2), DisplayName=yaw+" yaw")
-xlim([-30, 30])
-ylim([-30, 30])
-legend
-axis("equal")
+%%
+figure
+plot(data(:,1), data(:, 2))
+hold 
+plot(time-5, -inertialPosition(:,3)+150)

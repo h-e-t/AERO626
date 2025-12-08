@@ -6,19 +6,16 @@ function processOutFile()
     
     inertialVelocity          = out.Ve.Data;
     inertialPosition          = out.Xe.Data; 
-    
+    inertialAcceleration      = out.inertialAcceleration.Data; 
 
-    MeasuredBodyAccelerations     = squeeze(out.Ab_est.Data); 
-    MeasuredBodyAngularRates      = out.Wb_est.Data;
-    MeasuredBodyMagMeasurements   = squeeze(out.bodyFrameMag.Data)'; 
+    MeasuredBodyAccelerations     = squeeze(out.Ab_est.Data)'; 
+    MeasuredBodyAngularRates      = squeeze(out.Wb_est.Data)';
+    MeasuredBodyMagMeasurements   = squeeze(out.bodyFrameMag.Data)';     
     
-    BodyFrameGravity          = squeeze(out.bodyFrameGravity.Data)';
-    
-    
-    RealBodyAccelerations     = out.Ab_real.Data;
+    RealBodyAccelerations     = squeeze(out.Ab_real.Data)';
     RealBodyAngularRates      = out.Wb_real.Data;
     
-    
+    BodyFrameGravity          = squeeze(out.bodyFrameGravity.Data)'; 
 
     % STATE_VECTOR 
     %  [1:4]  quaternion attitude
@@ -27,7 +24,7 @@ function processOutFile()
     % [11:13] gyro  bias
     % [14:16] accel bias
 
-    TrueStateHistory          = [quatAttitude'; inertialVelocity'; inertialPosition']; 
+    TrueStateHistory          = [quatAttitude'; inertialVelocity'; inertialPosition']'; 
     
     time              = out.tout;
     
@@ -39,6 +36,6 @@ function processOutFile()
     save(saveName,  'MeasuredBodyAccelerations', 'MeasuredBodyAngularRates', ...
                     'RealBodyAccelerations', 'RealBodyAngularRates', ...
                     'eulerAngles', 'inertialVelocity', 'inertialPosition', ...
-                    "quatAttitude", "time", "BodyFrameGravity", "BodyFrameGravity", ...
-                    "MeasuredBodyMagMeasurements", "TrueStateHistory");
+                    "quatAttitude", "time", "MeasuredBodyMagMeasurements", ...
+                    "TrueStateHistory", "inertialAcceleration", "BodyFrameGravity");
 end

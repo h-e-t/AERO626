@@ -19,28 +19,28 @@ function Plotter(time, EstimatedStateHistory, EstimatedCovarianceHistory, TrueSt
         figure("Name","Estimated Position Over Time")
         tiledlayout(3,1); 
         nexttile
-        plot(time, EstimatedStateHistory(8,:), DisplayName="Estimated X")
+        plot(time, EstimatedStateHistory(:,8), DisplayName="Estimated X")
         hold on
-        plot(time, TrueStateHistory(8,:), DisplayName="True X")
+        plot(time, TrueStateHistory(:,8), DisplayName="True X")
         legend()
         
         nexttile
-        plot(time, EstimatedStateHistory(9,:), DisplayName="Estimated Y")
+        plot(time, EstimatedStateHistory(:,9), DisplayName="Estimated Y")
         hold on
-        plot(time, TrueStateHistory(9,:), DisplayName="True Y")
+        plot(time, TrueStateHistory(:,9), DisplayName="True Y")
         legend()
         
         nexttile
-        plot(time, -EstimatedStateHistory(10,:), DisplayName="Estimated Z")
+        plot(time, -EstimatedStateHistory(:,10), DisplayName="Estimated Z")
         hold on
-        plot(time, -TrueStateHistory(10,:), DisplayName="True Z")
+        plot(time, -TrueStateHistory(:,10), DisplayName="True Z")
         legend()
         
     end
 
     if plotAttitude
-        EstimatedAttitude = rad2deg(quat2eul(EstimatedStateHistory(1:4, :)',"ZYX"));
-        RealAttitude      = rad2deg(quat2eul(TrueStateHistory(1:4,:)',"ZYX"));
+        EstimatedAttitude = rad2deg(quat2eul(EstimatedStateHistory(:, 1:4),"ZYX"));
+        RealAttitude      = rad2deg(quat2eul(TrueStateHistory(:, 1:4),"ZYX"));
 
         figure(Name="Attitude Over time")
         tiledlayout(3,1); 
@@ -71,21 +71,21 @@ function Plotter(time, EstimatedStateHistory, EstimatedCovarianceHistory, TrueSt
         figure("Name","Estimated Inertial Velocity Over Time")
         tiledlayout(3,1); 
         nexttile
-        plot(time, EstimatedStateHistory(5,:), DisplayName="Estimated X Vel")
+        plot(time, EstimatedStateHistory(:,5), DisplayName="Estimated X Vel")
         hold on
-        plot(time, TrueStateHistory(5,:), DisplayName="True X Vel")
+        plot(time, TrueStateHistory(:,5), DisplayName="True X Vel")
         legend()
         
         nexttile
-        plot(time, EstimatedStateHistory(6,:), DisplayName="Estimated Y Vel")
+        plot(time, EstimatedStateHistory(:,6), DisplayName="Estimated Y Vel")
         hold on
-        plot(time, TrueStateHistory(6,:), DisplayName="True Y Vel")
+        plot(time, TrueStateHistory(:,6), DisplayName="True Y Vel")
         legend()
         
         nexttile
-        plot(time, -EstimatedStateHistory(7,:), DisplayName="Estimated Z Vel")
+        plot(time, -EstimatedStateHistory(:,7), DisplayName="Estimated Z Vel")
         hold on
-        plot(time, -TrueStateHistory(7,:), DisplayName="True Z Vel")
+        plot(time, -TrueStateHistory(:,7), DisplayName="True Z Vel")
         legend()
     end
 end

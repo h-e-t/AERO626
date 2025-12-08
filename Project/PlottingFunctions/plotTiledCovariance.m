@@ -1,4 +1,4 @@
-function plotTiledComparison(n, xSeriesData, error, covariance, yLabels, xLabelStr)
+function plotTiledCovariance(n, xSeriesData, error, covariance, yLabels, xLabelStr)
 % plotTiledComparison creates an n-by-1 tiled layout where each tile 
 % shows the i-th row of data1 and data2 plotted together.
 %
@@ -16,21 +16,21 @@ function plotTiledComparison(n, xSeriesData, error, covariance, yLabels, xLabelS
     % Create tiled layout
     t = tiledlayout(n, 1);
     % t.TileSpacing = 'compact';
-    % t.Padding = 'compact';
+    t.Padding = 'compact';
 
     % Loop through tiles
     for i = 1:n
         nexttile;
 
-        plot(xSeriesData, error(i,:), 'LineWidth', 1.3, 'Color','k', 'DisplayName','Estimate Error')
+        plot(xSeriesData, error(:, i), 'LineWidth', 2, 'Color','k', 'DisplayName','Estimate Error')
 
         hold on;
         
-        plot(xSeriesData, covariance(i,:), 'LineWidth', 1.3, Color='r', DisplayName="Covariance");
-        plot(xSeriesData, -covariance(i,:), 'LineWidth', 1.3, Color='r', HandleVisibility='off');
+        plot(xSeriesData, covariance(:, i), 'LineWidth', 2, Color='r', DisplayName="Covariance");
+        plot(xSeriesData, -covariance(:, i), 'LineWidth', 2, Color='r', HandleVisibility='off');
 
 
-        ylabel(yLabels{i}, 'Interpreter', 'latex');
+        ylabel(yLabels{i}, 'Interpreter', 'latex', fontsize=14);
         grid on;
 
         if i == n
