@@ -1,7 +1,7 @@
 clc 
 clear
 
-load("OutputData\Log_1208_153929.mat")
+load("OutputData\Log_1208_235631.mat")
 %%
 % STATE_VECTOR 
 %  [1:4]  quaternion attitude
@@ -17,7 +17,7 @@ load("OutputData\Log_1208_153929.mat")
 % [10:12] gyro bias covariance
 % [13:15] accel bias covariance
 
-initQuat = eul2quat(deg2rad([15 76 5]), "ZYX");
+initQuat = eul2quat(deg2rad([0 85 0]), "ZYX");
 
 initalestimate = [initQuat 0 0 0 0 0 0 0 0 0 0 0 0];
 intialestimateCovariance=eye(15).*.01;
@@ -31,7 +31,6 @@ accel_bias_cov    = diag([.05 .05 .05]);
 mag_cov   = diag([.05 .05 .05]);
 
 gps_cov   = diag([.05 .05 .05 1.17 1.17 1.17]);
-% gps_cov   = diag([.2 .2 .2 2 2 2]);
 
 baro_cov    = .5;
 
@@ -44,31 +43,21 @@ filter = MEKF_CLASS(initalestimate', intialestimateCovariance, ...
                     mag_cov, gps_cov, baro_cov);
 
 
-
-
 [state, covariance] = filter.getFilterState();
 
-
-
-% firstState = rad2deg(quat2eul(state(1:4)'))
-
-
-% numSamplesTested = 5; % this completes the ascent for 85 deg 
 numSamplesTested = 4300; % this completes the ascent for 85 deg 
 
 stateHistory        = nan(numSamplesTested,16); 
 covarianceHistory   = nan(numSamplesTested,15);
 
 for i=1:numSamplesTested
-% for i=1:400
     [state, covariance] = filter.getFilterState();
     
     stateHistory(i, :)        = state'; 
     covarianceHistory(i, :)   = covariance';
 
-    BodyAccelBias = [0 0 0]';
     % angular rates are measured as x y z rates in the body frame
-    filter.propagate(MeasuredBodyAngularRates(i,:)', MeasuredBodyAccelerations(i,:)' + BodyAccelBias, dt);
+    filter.propagate(MeasuredBodyAngularRates(i,:)', MeasuredBodyAccelerations(i,:)', dt);
     
     filter.updateWithGravity(MeasuredBodyAccelerations(i,:)');
 
@@ -76,8 +65,8 @@ for i=1:numSamplesTested
     if mod(i, 4) == 0 
         filter.updateWithMagnetometer(MeasuredBodyMagMeasurements(i,:)');
     end
-
-    % GPS Update (Sampled lower to reflect update frequency)
+    % 
+    % % GPS Update (Sampled lower to reflect update frequency)
     if mod(i, 80) == 0  
         % Rayleight Sampling
         [pos_meas, vel_meas] = RayleighSampling(inertialVelocity(i, :)',inertialPosition(i, :)');
@@ -93,36 +82,31 @@ for i=1:numSamplesTested
 
 
 end
-%
+
 %%
-figure(Name = "Quaternion Estimate Covariance")
-quatError = stateHistory(:, 2:4) - TrueStateHistory(1:numSamplesTested, 2:4); 
-plotTiledCovariance(3,time(1:numSamplesTested), quatError, 3*sqrt(covarianceHistory(:, 1:3)),{"$q_1$ Error", "$q_2$ Error", "$q_3$ Error", "$q_4$ Error"}, "Time (s)")
-
-
 figure(Name = "Velocity Estimate Covariance")
+
 velError = stateHistory(:, 5:7) - TrueStateHistory(1:numSamplesTested, 5:7);
 plotTiledCovariance(3,time(1:numSamplesTested), velError, 3*sqrt(covarianceHistory(:,4:6)),{"$v_x$ Error", "$v_y$ Error", "$v_z$ Error"}, "Time (s)")
 
-
+figure2pdf("MEKF Velocity Estimate Covariance");
+%%
 figure(Name = "Position Estimate Covariance")
 posError = stateHistory(:,8:10) - TrueStateHistory(1:numSamplesTested,8:10);
 plotTiledCovariance(3,time(1:numSamplesTested), posError, 3*sqrt(covarianceHistory(:, 7:9)),{"$r_x$ Error", "$r_y$ Error", "$r_z$ Error"}, "Time (s)")
 
+figure2pdf("MEKF Position Estimate Covariance");
+% 
+%%
+figure(Name = "Attitude Estimate Covariance")
+
+quatError = quatmultiply(stateHistory(:, 1:4), quatinv(TrueStateHistory(1:numSamplesTested, 1:4))); 
+angles = rad2deg(quat2eul(quatError, "ZYX"));
+
+plotTiledCovariance(3,time(1:numSamplesTested), angles, 5.*sqrt(covarianceHistory(:, 1:3)),{"Yaw Error", "Pitch Error", "Roll Error"}, "Time (s)")
+figure2pdf("MEKF Attitude Estimate Covariance");
 %%
 Plotter(time(1:numSamplesTested), stateHistory,covarianceHistory, TrueStateHistory(1:numSamplesTested,:), 0, 1,0); 
 
 %%
-figure()
-tiledlayout()
-for i = 1:3
-%%
-% figure(Name = "Gyro bias estimate")
-% estimateError = stateHistory(:,14:16); 
-% plotTiledCovariance(3,time(1:numSamplesTested), estimateError, 3*sqrt(covarianceHistory(:,10:12)),{"$b_{\omega x}$ Error", "$b_{\omega y}$ Error", "$b_{\omega z}$ Error"}, "Time (s)")
-
-%%
-% figure(Name = "Accel bias estimate")
-% estimateError = stateHistory(:, 11:13); 
-% plotTiledCovariance(3,time(1:numSamplesTested), estimateError, 3*sqrt(covarianceHistory(:,13:15)),{"$r_x$ Error", "$r_y$ Error", "$r_z$ Error"}, "Time (s)")
-
+plot(inertialPosition(:, 3))

@@ -27,7 +27,7 @@ classdef EGMF_CLASS < handle
                 initGuess MEKF_CLASS
             end
 
-            N = 2 * 15 + 1;
+            N = 24;
 
             obj.components       = cell(1,N); 
 
@@ -46,7 +46,7 @@ classdef EGMF_CLASS < handle
             obj.components{6}.rotate([0 -errorStateCovariance(2) 0]); 
             obj.components{7}.rotate([ 0 0 -errorStateCovariance(3)]);
 
-            for idx = 8:2:31
+            for idx = 8:2:23
                 covIdx = idx/2; 
 
                 obj.components{idx}.estimate(covIdx+1)   =   obj.components{idx}.estimate(covIdx+1) + errorStateCovariance(covIdx); 
