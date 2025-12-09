@@ -165,23 +165,25 @@ classdef MEKF_CLASS < handle
         end
        
         function updateWithMagnetometer(obj, magMeas)
-               % NED_mag         = [27.5550; -2.4169; -16.0849];
+            NED_mag         = [27.5550; -2.4169; -16.0849];
 
             NED_declination = -0.0875; 
 
-            Estimated_Mag   = quat2rotm(obj.estimate(1:4)')*magMeas;
+            Estimated_Mag           = quat2rotm(obj.estimate(1:4)')*magMeas;
 
-            EstimatedDeclination = atan2(Estimated_Mag(2), Estimated_Mag(1));
+            EstimatedDeclination    = atan2(Estimated_Mag(2), Estimated_Mag(1));
 
             del_beta = [0 0 (NED_declination - EstimatedDeclination)]';
 
-            Kgain = obj.estimate_covariance(1:3,1:3)/(obj.mag_cov + obj.estimate_covariance(1:3,1:3));
+            H = [1 0 0;
+                 0 1 0;
+                 0 0 1];
+
+            Kgain    = obj.estimate_covariance(1:3,1:3) * H/(obj.mag_cov + H * obj.estimate_covariance(1:3,1:3) * H');
 
             obj.estimate(1:4) = quatmultiply(obj.estimate(1:4)', [1 (Kgain*del_beta)'./2]); 
 
-            obj.estimate_covariance(1:3, 1:3) = (eye(3) - Kgain)*obj.estimate_covariance(1:3, 1:3); 
-
-
+            obj.estimate_covariance(1:3, 1:3) = (eye(3) - Kgain)*obj.estimate_covariance(1:3, 1:3)*.98; 
         end
 
         function updateWithBarometer(obj, baro_meas)
