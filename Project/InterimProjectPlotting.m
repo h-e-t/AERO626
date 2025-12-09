@@ -63,19 +63,19 @@ plot(time, MeasuredBodyAngularRates(:,1), "red",LineWidth=2, DisplayName="Measur
 hold on
 plot(time, RealBodyAngularRates(:,1), "black",LineWidth=2, DisplayName="Real Angular Rates")
 legend()
-ylabel("X Angular Rates (rad/s)")
+ylabel("X Rate (rad/s)")
 
 nexttile 
 plot(time, MeasuredBodyAngularRates(:,2), "red",LineWidth=2)
 hold on
 plot(time, RealBodyAngularRates(:,2), "black",LineWidth=2)
-ylabel("Y Angular Rates (rad/s)")
+ylabel("Y Rate (rad/s)")
 
 nexttile 
 plot(time, MeasuredBodyAngularRates(:,3), "red",LineWidth=2)
 hold on
 plot(time, RealBodyAngularRates(:,3), "black",LineWidth=2)
-ylabel("Z Angular Rates (rad/s)")
+ylabel("Z Rate (rad/s)")
 
 xlabel("Time (s)")
 
