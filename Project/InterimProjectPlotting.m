@@ -1,5 +1,5 @@
 
-load("OutputData\Log_1208_171059.mat")
+load("OutputData\Log_1209_021006.mat")
 
 figure(Name="Position over time")
 tiledlayout(3,1)
@@ -24,8 +24,10 @@ plot(time(1:80:end), -MeasuredPosition(1:80:end, 3)+150, "red", LineWidth=2)
 ylabel("Z Inertial Position (m)")
 xlabel("Time (s)")
 
-exportgraphics(gcf,"interialPosOverTime.png",Units="inches", ...
-       Width=5,Height=4,Resolution=300)
+figure2pdf("interialPosOverTime.pdf")
+
+% exportgraphics(gcf,"interialPosOverTime.png",Units="inches", ...
+%        Width=5,Height=4,Resolution=300)
 
 %%
 figure(Name="Velocity over time")
@@ -50,8 +52,9 @@ plot(time(1:80:end), -MeasuredVelocity(1:80:end, 3), "red", LineWidth=2)
 ylabel("Z Inertial Velocity (m)")
 xlabel("Time (s)")
 
-exportgraphics(gcf,"interialVelOverTime.png",Units="inches", ...
-       Width=5,Height=4,Resolution=300)
+figure2pdf("interialVelOverTime.pdf")
+% exportgraphics(gcf,"interialVelOverTime.png",Units="inches", ...
+%        Width=5,Height=4,Resolution=300)
 
 
 %%
@@ -79,8 +82,9 @@ ylabel("Z Rate (rad/s)")
 
 xlabel("Time (s)")
 
-exportgraphics(gcf,"realvsmeasuredangularRates.png",Units="inches", ...
-       Width=5,Height=4,Resolution=300)
+figure2pdf("realvsmeasuredangularRates.pdf")
+% exportgraphics(gcf,"realvsmeasuredangularRates.png",Units="inches", ...
+       % Width=5,Height=4,Resolution=300)
 
 %%
 figure("Name","AccelMeasurementVSTrueOvertime")
@@ -108,6 +112,7 @@ ylabel("Z Acceleration (m/s^2)")
 
 xlabel("Time (s)")
 
-exportgraphics(gcf,"realvsmeasuredaccelerations.png",Units="inches", ...
-       Width=5,Height=4,Resolution=300)
+figure2pdf("realvsmeasuredaccelerations.pdf")
+% exportgraphics(gcf,"realvsmeasuredaccelerations.png",Units="inches", ...
+       % Width=5,Height=4,Resolution=300)
 

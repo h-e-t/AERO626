@@ -15,9 +15,8 @@ classdef EGMF_CLASS < handle
         weights              % Nx1 mixture weights
         numComponents  
 
-        % pruning & merging parameters
+        % pruning parameter
         minWeight = 1e-4
-        maxComponents = 10
     end
     
     methods(Access=public)
@@ -27,7 +26,7 @@ classdef EGMF_CLASS < handle
                 initGuess MEKF_CLASS
             end
 
-            N = 24;
+            N = 19;
 
             obj.components       = cell(1,N); 
 
@@ -46,7 +45,7 @@ classdef EGMF_CLASS < handle
             obj.components{6}.rotate([0 -errorStateCovariance(2) 0]); 
             obj.components{7}.rotate([ 0 0 -errorStateCovariance(3)]);
 
-            for idx = 8:2:23
+            for idx = 8:2:18
                 covIdx = idx/2; 
 
                 obj.components{idx}.estimate(covIdx+1)   =   obj.components{idx}.estimate(covIdx+1) + errorStateCovariance(covIdx); 

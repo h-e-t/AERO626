@@ -39,8 +39,8 @@ function Plotter(time, EstimatedStateHistory, EstimatedCovarianceHistory, TrueSt
     end
 
     if plotAttitude
-        EstimatedAttitude = rad2deg(quat2eul(EstimatedStateHistory(:, 1:4),"ZYX"));
-        RealAttitude      = rad2deg(quat2eul(TrueStateHistory(:, 1:4),"ZYX"));
+        EstimatedAttitude = eulerd(quaternion(EstimatedStateHistory(:, 1:4)),"ZYX","frame");
+        RealAttitude      = eulerd(quaternion(TrueStateHistory(:, 1:4)),"ZYX","frame");
 
         figure(Name="Attitude Over time")
         tiledlayout(3,1); 

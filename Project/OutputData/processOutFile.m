@@ -31,7 +31,7 @@ function processOutFile()
     time              = out.tout;
     
     saveName = datedFilename('Log', '.mat', ...
-        'C:\Users\emmat\Desktop\ACADEMIC\YEAR5\AERO626\Project\OutputData\',"MMdd_HHmmss");
+        'C:\Users\emmat\Desktop\Year5\AERO626\Project\OutputData\',"MMdd_HHmmss");
 
     disp("File saved at " + saveName);
     
